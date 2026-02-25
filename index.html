@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleming's Hand Rules 3D Viewer</title>
+    <!-- 引入 Google model-viewer 元件 -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* 防止出現捲動條 */
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .panel {
+            flex: 1; /* 左右各佔 50% */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-right: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .controls {
+            padding: 15px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .controls h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 特別為 toggle 按鈕設定不同顏色以示區別（可選） */
+        button.toggle-btn {
+            background-color: #28a745;
+        }
+        button.toggle-btn:hover {
+            background-color: #218838;
+        }
+
+        input[type="file"] {
+            font-size: 0.9rem;
+        }
+
+        /* model-viewer 樣式 */
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #e0e0e0; /* 預設背景色 */
+            --poster-color: #e0e0e0;
+            position: relative;
+        }
+
+        /* 錯誤訊息覆蓋層 */
+        .error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 100;
+            display: none; /* 預設隱藏 */
+        }
+
+        .error-overlay h3 {
+            color: #d9534f;
+            margin-bottom: 10px;
+        }
+
+        .error-overlay p {
+            color: #333;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+
+        /* 左屏特定樣式 */
+        #left-panel model-viewer {
+            background-color: #e8f0fe; /* 淺藍色背景區分 */
+        }
+
+        /* 右屏特定樣式 */
+        #right-panel model-viewer {
+            background-color: #fef0e8; /* 淺橘色背景區分 */
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 左半屏 -->
+    <div class="panel" id="left-panel">
+        <div class="controls">
+            <h2>左半屏: 佛萊明左手定則</h2>
+            <div class="button-group">
+                <input type="file" id="left-file-input" accept=".glb,.gltf">
+                <button id="left-default-btn">開啟預設左手定則</button>
+                <button id="left-rotate-btn" class="toggle-btn">開始旋轉</button>
+            </div>
+        </div>
+        <!-- 3D 檢視器 -->
+        <model-viewer 
+            id="left-viewer" 
+            src="models/1.Fleming left hand rule with arrow and remarks.glb"
+            camera-controls 
+            shadow-intensity="1"
+            alt="3D model of Fleming's Left Hand Rule">
+            <div id="left-error-overlay" class="error-overlay">
+                <h3>無法載入模型</h3>
+                <p>請確認檔案 "models/1.Fleming left hand rule with arrow and remarks.glb" 存在。</p>
+                <p><strong>注意：</strong>如果使用 "file://" 協議打開（雙擊 HTML），瀏覽器可能會阻擋本地資源載入。請使用 VS Code Live Server 或在終端機運行 "python -m http.server" 並訪問 localhost。</p>
+            </div>
+        </model-viewer>
+    </div>
+
+    <!-- 右半屏 -->
+    <div class="panel" id="right-panel">
+        <div class="controls">
+            <h2>右半屏: 佛萊明右手定則</h2>
+            <div class="button-group">
+                <input type="file" id="right-file-input" accept=".glb,.gltf">
+                <button id="right-default-btn">開啟預設右手定則</button>
+                <button id="right-rotate-btn" class="toggle-btn">開始旋轉</button>
+            </div>
+        </div>
+        <!-- 3D 檢視器 -->
+        <model-viewer 
+            id="right-viewer" 
+            src="models/2.Fleming right hand rule with arrow and remarks.glb"
+            camera-controls 
+            shadow-intensity="1"
+            alt="3D model of Fleming's Right Hand Rule">
+            <div id="right-error-overlay" class="error-overlay">
+                <h3>無法載入模型</h3>
+                <p>請確認檔案 "models/2.Fleming right hand rule with arrow and remarks.glb" 存在。</p>
+                <p><strong>注意：</strong>如果使用 "file://" 協議打開（雙擊 HTML），瀏覽器可能會阻擋本地資源載入。請使用 VS Code Live Server 或在終端機運行 "python -m http.server" 並訪問 localhost。</p>
+            </div>
+        </model-viewer>
+    </div>
+</div>
+
+<script>
+    // 定義預設檔案路徑
+    // 注意：在本地 file:// 協議下，路徑可能需要特殊處理，這裡使用相對路徑，並保留空格
+    const LEFT_DEFAULT_PATH = 'models/1.Fleming left hand rule with arrow and remarks.glb';
+    const RIGHT_DEFAULT_PATH = 'models/2.Fleming right hand rule with arrow and remarks.glb';
+
+    // 取得 DOM 元素
+    const leftViewer = document.getElementById('left-viewer');
+    const leftFileInput = document.getElementById('left-file-input');
+    const leftDefaultBtn = document.getElementById('left-default-btn');
+    const leftRotateBtn = document.getElementById('left-rotate-btn');
+    const leftErrorOverlay = document.getElementById('left-error-overlay');
+
+    const rightViewer = document.getElementById('right-viewer');
+    const rightFileInput = document.getElementById('right-file-input');
+    const rightDefaultBtn = document.getElementById('right-default-btn');
+    const rightRotateBtn = document.getElementById('right-rotate-btn');
+    const rightErrorOverlay = document.getElementById('right-error-overlay');
+
+    // 通用載入檔案函式 (處理上載)
+    function handleFileUpload(inputElement, viewerElement, errorOverlay) {
+        inputElement.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                viewerElement.src = url;
+                viewerElement.alt = file.name;
+                errorOverlay.style.display = 'none'; // 隱藏錯誤
+            }
+        });
+    }
+
+    // 通用載入預設檔案函式
+    function loadDefaultModel(viewerElement, path, errorOverlay) {
+        // 重置 src 以觸發載入
+        viewerElement.src = path;
+        viewerElement.alt = "Default Model";
+        errorOverlay.style.display = 'none'; // 先隱藏
+    }
+
+    // 處理 model-viewer 載入錯誤
+    function handleLoadError(viewerElement, errorOverlay) {
+        viewerElement.addEventListener('error', (e) => {
+            console.error(`Error loading model for ${viewerElement.id}:`, e);
+            errorOverlay.style.display = 'flex'; // 顯示錯誤提示
+        });
+        // 成功載入時隱藏
+        viewerElement.addEventListener('load', () => {
+             errorOverlay.style.display = 'none';
+        });
+    }
+
+    // 通用切換旋轉函式
+    function toggleRotation(viewerElement, btnElement) {
+        if (viewerElement.hasAttribute('auto-rotate')) {
+            viewerElement.removeAttribute('auto-rotate');
+            btnElement.textContent = '開始旋轉';
+        } else {
+            viewerElement.setAttribute('auto-rotate', '');
+            btnElement.textContent = '停止旋轉';
+        }
+    }
+
+    // --- 初始化左側邏輯 ---
+    // 預先設定錯誤監聽器，因為 src 在 HTML 中已設定，可能會立即觸發 error
+    handleLoadError(leftViewer, leftErrorOverlay);
+    handleLoadError(rightViewer, rightErrorOverlay);
+
+    handleFileUpload(leftFileInput, leftViewer, leftErrorOverlay);
+    
+    leftDefaultBtn.addEventListener('click', () => {
+        loadDefaultModel(leftViewer, LEFT_DEFAULT_PATH, leftErrorOverlay);
+        leftFileInput.value = ''; 
+    });
+
+    leftRotateBtn.addEventListener('click', () => {
+        toggleRotation(leftViewer, leftRotateBtn);
+    });
+
+    // --- 初始化右側邏輯 ---
+    handleFileUpload(rightFileInput, rightViewer, rightErrorOverlay);
+
+    rightDefaultBtn.addEventListener('click', () => {
+        loadDefaultModel(rightViewer, RIGHT_DEFAULT_PATH, rightErrorOverlay);
+        rightFileInput.value = '';
+    });
+
+    rightRotateBtn.addEventListener('click', () => {
+        toggleRotation(rightViewer, rightRotateBtn);
+    });
+
+</script>
+
+</body>
+</html>
