@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>佛萊明左右手定則 3D 教學</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="app-bar">
+      <div class="brand">
+        <h1>佛萊明左右手定則</h1>
+        <p>互動 3D 教學檢視器</p>
+      </div>
+      <div class="global-controls">
+        <label class="check">
+          <input type="checkbox" id="sync-rotate" />
+          同步旋轉
+        </label>
+        <label class="check">
+          <input type="checkbox" id="skin-tint" checked />
+          自然膚色
+        </label>
+        <label class="slider">
+          膚色強度
+          <input type="range" id="skin-strength" min="0" max="100" value="85" />
+        </label>
+        <label class="check">
+          <input type="checkbox" id="show-rig" checked />
+          顯示公式向量
+        </label>
+      </div>
+    </header>
+
+    <main class="split">
+      <section class="panel" id="left-panel" data-side="left">
+        <div class="controls">
+          <h2>左半屏：佛萊明左手定則（摩打）</h2>
+          <div class="button-group">
+            <button type="button" class="btn-primary" data-action="reload">開啟預設左手定則</button>
+            <button type="button" class="btn-toggle" data-action="rotate" aria-pressed="false">開始旋轉</button>
+            <button type="button" class="btn-ghost" data-action="reset-camera">重設視角</button>
+            <button type="button" class="btn-ghost" data-action="reset-pose">重設模型旋轉</button>
+          </div>
+          <div class="vector-toggles" role="group" aria-label="向量顯示">
+            <button type="button" class="chip chip-f" data-vector="F" aria-pressed="true">F 力</button>
+            <button type="button" class="chip chip-b" data-vector="B" aria-pressed="true">B 磁場</button>
+            <button type="button" class="chip chip-i" data-vector="I" aria-pressed="true">I 電流</button>
+          </div>
+          <div class="pose-tools">
+            <div class="tool-row" role="group" aria-label="視角預設">
+              <span class="tool-label">視角</span>
+              <button type="button" data-view="front">正面</button>
+              <button type="button" data-view="side">側面</button>
+              <button type="button" data-view="top">頂視</button>
+              <button type="button" data-view="back">背面</button>
+            </div>
+            <div class="tool-row" role="group" aria-label="繞軸旋轉">
+              <span class="tool-label">繞軸</span>
+              <span class="axis-group"><abbr title="繞 F 軸">F</abbr>
+                <button type="button" data-spin="F" data-deg="-90">−90°</button>
+                <button type="button" data-spin="F" data-deg="-15">−15°</button>
+                <button type="button" data-spin="F" data-deg="15">+15°</button>
+                <button type="button" data-spin="F" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 B 軸">B</abbr>
+                <button type="button" data-spin="B" data-deg="-90">−90°</button>
+                <button type="button" data-spin="B" data-deg="-15">−15°</button>
+                <button type="button" data-spin="B" data-deg="15">+15°</button>
+                <button type="button" data-spin="B" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 I 軸">I</abbr>
+                <button type="button" data-spin="I" data-deg="-90">−90°</button>
+                <button type="button" data-spin="I" data-deg="-15">−15°</button>
+                <button type="button" data-spin="I" data-deg="15">+15°</button>
+                <button type="button" data-spin="I" data-deg="90">+90°</button>
+              </span>
+            </div>
+            <div class="tool-row" role="group" aria-label="對齊向量">
+              <span class="tool-label">對齊</span>
+              <span class="axis-group">朝鏡頭
+                <button type="button" data-align="toCamera" data-axis="F">F</button>
+                <button type="button" data-align="toCamera" data-axis="B">B</button>
+                <button type="button" data-align="toCamera" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">垂直
+                <button type="button" data-align="vertical" data-axis="F">F</button>
+                <button type="button" data-align="vertical" data-axis="B">B</button>
+                <button type="button" data-align="vertical" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">水平
+                <button type="button" data-align="horizontal" data-axis="F">F</button>
+                <button type="button" data-align="horizontal" data-axis="B">B</button>
+                <button type="button" data-align="horizontal" data-axis="I">I</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="viewport">
+          <canvas id="left-canvas"></canvas>
+          <div class="loading" data-loading>載入模型中…</div>
+        </div>
+        <aside class="formula-card" data-formula="motor">
+          <div class="formula-head">
+            <h3>公式教具</h3>
+            <p>拇指為力 F，食指為磁場 B，中指為電流 I。</p>
+          </div>
+          <p class="formula-eq">
+            <span class="sym-f">F</span> = <span class="sym-b">B</span><span class="sym-i">I</span>L sinθ
+          </p>
+          <div class="sliders">
+            <label>B 磁場 <strong data-val="B">1.00 T</strong><input type="range" data-param="B" min="0" max="2" step="0.01" value="1" /></label>
+            <label>I 電流 <strong data-val="I">1.00 A</strong><input type="range" data-param="I" min="0" max="5" step="0.01" value="1" /></label>
+            <label>L 導線長度 <strong data-val="L">0.10 m</strong><input type="range" data-param="L" min="0.01" max="1" step="0.01" value="0.10" /></label>
+            <label>θ 夾角 <strong data-val="theta">90°</strong><input type="range" data-param="theta" min="0" max="180" step="1" value="90" /></label>
+            <div class="theta-snaps" role="group" aria-label="常用夾角">
+              <button type="button" data-snap="0">0°</button>
+              <button type="button" data-snap="90">90°</button>
+              <button type="button" data-snap="180">180°</button>
+            </div>
+            <p class="align-note" data-align-note>θ = 90° 時三隻手指互相垂直，對應標準手勢。</p>
+          </div>
+          <div class="result-row">
+            <div class="result">F = <strong data-result>0.100</strong> N</div>
+            <svg class="diagram" data-diagram viewBox="0 0 220 140" aria-hidden="true"></svg>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel" id="right-panel" data-side="right">
+        <div class="controls">
+          <h2>右半屏：佛萊明右手定則（發電機）</h2>
+          <div class="button-group">
+            <button type="button" class="btn-primary" data-action="reload">開啟預設右手定則</button>
+            <button type="button" class="btn-toggle" data-action="rotate" aria-pressed="false">開始旋轉</button>
+            <button type="button" class="btn-ghost" data-action="reset-camera">重設視角</button>
+            <button type="button" class="btn-ghost" data-action="reset-pose">重設模型旋轉</button>
+          </div>
+          <div class="vector-toggles" role="group" aria-label="向量顯示">
+            <button type="button" class="chip chip-f" data-vector="F" aria-pressed="true">F／v 運動</button>
+            <button type="button" class="chip chip-b" data-vector="B" aria-pressed="true">B 磁場</button>
+            <button type="button" class="chip chip-i" data-vector="I" aria-pressed="true">I／E 電動勢</button>
+          </div>
+          <div class="pose-tools">
+            <div class="tool-row" role="group" aria-label="視角預設">
+              <span class="tool-label">視角</span>
+              <button type="button" data-view="front">正面</button>
+              <button type="button" data-view="side">側面</button>
+              <button type="button" data-view="top">頂視</button>
+              <button type="button" data-view="back">背面</button>
+            </div>
+            <div class="tool-row" role="group" aria-label="繞軸旋轉">
+              <span class="tool-label">繞軸</span>
+              <span class="axis-group"><abbr title="繞 F 軸">F</abbr>
+                <button type="button" data-spin="F" data-deg="-90">−90°</button>
+                <button type="button" data-spin="F" data-deg="-15">−15°</button>
+                <button type="button" data-spin="F" data-deg="15">+15°</button>
+                <button type="button" data-spin="F" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 B 軸">B</abbr>
+                <button type="button" data-spin="B" data-deg="-90">−90°</button>
+                <button type="button" data-spin="B" data-deg="-15">−15°</button>
+                <button type="button" data-spin="B" data-deg="15">+15°</button>
+                <button type="button" data-spin="B" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 I 軸">I</abbr>
+                <button type="button" data-spin="I" data-deg="-90">−90°</button>
+                <button type="button" data-spin="I" data-deg="-15">−15°</button>
+                <button type="button" data-spin="I" data-deg="15">+15°</button>
+                <button type="button" data-spin="I" data-deg="90">+90°</button>
+              </span>
+            </div>
+            <div class="tool-row" role="group" aria-label="對齊向量">
+              <span class="tool-label">對齊</span>
+              <span class="axis-group">朝鏡頭
+                <button type="button" data-align="toCamera" data-axis="F">F</button>
+                <button type="button" data-align="toCamera" data-axis="B">B</button>
+                <button type="button" data-align="toCamera" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">垂直
+                <button type="button" data-align="vertical" data-axis="F">F</button>
+                <button type="button" data-align="vertical" data-axis="B">B</button>
+                <button type="button" data-align="vertical" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">水平
+                <button type="button" data-align="horizontal" data-axis="F">F</button>
+                <button type="button" data-align="horizontal" data-axis="B">B</button>
+                <button type="button" data-align="horizontal" data-axis="I">I</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="viewport">
+          <canvas id="right-canvas"></canvas>
+          <div class="loading" data-loading>載入模型中…</div>
+        </div>
+        <aside class="formula-card" data-formula="generator">
+          <div class="formula-head">
+            <h3>公式教具</h3>
+            <p>拇指為運動方向 v（模型標示為 F），食指為磁場 B，中指為感應電流／電動勢。</p>
+          </div>
+          <p class="formula-eq">
+            <span class="sym-f">E</span> = <span class="sym-b">B</span> ℓ <span class="sym-i">v</span> sinθ
+          </p>
+          <div class="sliders">
+            <label>B 磁場 <strong data-val="B">1.00 T</strong><input type="range" data-param="B" min="0" max="2" step="0.01" value="1" /></label>
+            <label>ℓ 導線長度 <strong data-val="L">0.10 m</strong><input type="range" data-param="L" min="0.01" max="1" step="0.01" value="0.10" /></label>
+            <label>v 速率 <strong data-val="v">1.00 m/s</strong><input type="range" data-param="v" min="0" max="10" step="0.01" value="1" /></label>
+            <label>θ 夾角 <strong data-val="theta">90°</strong><input type="range" data-param="theta" min="0" max="180" step="1" value="90" /></label>
+            <div class="theta-snaps" role="group" aria-label="常用夾角">
+              <button type="button" data-snap="0">0°</button>
+              <button type="button" data-snap="90">90°</button>
+              <button type="button" data-snap="180">180°</button>
+            </div>
+            <p class="align-note" data-align-note>θ = 90° 時三隻手指互相垂直，對應標準手勢。</p>
+          </div>
+          <div class="result-row">
+            <div class="result">E = <strong data-result>0.100</strong> V</div>
+            <svg class="diagram" data-diagram viewBox="0 0 220 140" aria-hidden="true"></svg>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
