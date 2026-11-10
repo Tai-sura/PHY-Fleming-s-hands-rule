@@ -1,287 +1,227 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleming's Hand Rules 3D Viewer</title>
-    <!-- 引入 Google model-viewer 元件 -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden; /* 防止出現捲動條 */
-        }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>佛萊明左右手定則 3D 教學</title>
+    <script type="module" crossorigin src="./assets/index-CcDRjbs_.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BlWCVQsm.css">
+  </head>
+  <body>
+    <header class="app-bar">
+      <div class="brand">
+        <h1>佛萊明左右手定則</h1>
+        <p>互動 3D 教學檢視器</p>
+      </div>
+      <div class="global-controls">
+        <label class="check">
+          <input type="checkbox" id="sync-rotate" />
+          同步旋轉
+        </label>
+        <label class="check">
+          <input type="checkbox" id="skin-tint" checked />
+          自然膚色
+        </label>
+        <label class="slider">
+          膚色強度
+          <input type="range" id="skin-strength" min="0" max="100" value="85" />
+        </label>
+        <label class="check">
+          <input type="checkbox" id="show-rig" checked />
+          顯示公式向量
+        </label>
+      </div>
+    </header>
 
-        .container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        .panel {
-            flex: 1; /* 左右各佔 50% */
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            border-right: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-
-        .panel:last-child {
-            border-right: none;
-        }
-
-        .controls {
-            padding: 15px;
-            background-color: #f8f9fa;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .controls h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.2rem;
-            color: #333;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        /* 特別為 toggle 按鈕設定不同顏色以示區別（可選） */
-        button.toggle-btn {
-            background-color: #28a745;
-        }
-        button.toggle-btn:hover {
-            background-color: #218838;
-        }
-
-        input[type="file"] {
-            font-size: 0.9rem;
-        }
-
-        /* model-viewer 樣式 */
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            background-color: #e0e0e0; /* 預設背景色 */
-            --poster-color: #e0e0e0;
-            position: relative;
-        }
-
-        /* 錯誤訊息覆蓋層 */
-        .error-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-            z-index: 100;
-            display: none; /* 預設隱藏 */
-        }
-
-        .error-overlay h3 {
-            color: #d9534f;
-            margin-bottom: 10px;
-        }
-
-        .error-overlay p {
-            color: #333;
-            max-width: 80%;
-            line-height: 1.5;
-        }
-
-        /* 左屏特定樣式 */
-        #left-panel model-viewer {
-            background-color: #e8f0fe; /* 淺藍色背景區分 */
-        }
-
-        /* 右屏特定樣式 */
-        #right-panel model-viewer {
-            background-color: #fef0e8; /* 淺橘色背景區分 */
-        }
-
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <!-- 左半屏 -->
-    <div class="panel" id="left-panel">
+    <main class="split">
+      <section class="panel" id="left-panel" data-side="left">
         <div class="controls">
-            <h2>左半屏: 佛萊明左手定則</h2>
-            <div class="button-group">
-                <input type="file" id="left-file-input" accept=".glb,.gltf">
-                <button id="left-default-btn">開啟預設左手定則</button>
-                <button id="left-rotate-btn" class="toggle-btn">開始旋轉</button>
+          <h2>左半屏：佛萊明左手定則（摩打）</h2>
+          <div class="button-group">
+            <button type="button" class="btn-primary" data-action="reload">開啟預設左手定則</button>
+            <button type="button" class="btn-toggle" data-action="rotate" aria-pressed="false">開始旋轉</button>
+            <button type="button" class="btn-ghost" data-action="reset-camera">重設視角</button>
+            <button type="button" class="btn-ghost" data-action="reset-pose">重設模型旋轉</button>
+          </div>
+          <div class="vector-toggles" role="group" aria-label="向量顯示">
+            <button type="button" class="chip chip-f" data-vector="F" aria-pressed="true">F 力</button>
+            <button type="button" class="chip chip-b" data-vector="B" aria-pressed="true">B 磁場</button>
+            <button type="button" class="chip chip-i" data-vector="I" aria-pressed="true">I 電流</button>
+          </div>
+          <div class="pose-tools">
+            <div class="tool-row" role="group" aria-label="視角預設">
+              <span class="tool-label">視角</span>
+              <button type="button" data-view="front">正面</button>
+              <button type="button" data-view="side">側面</button>
+              <button type="button" data-view="top">頂視</button>
+              <button type="button" data-view="back">背面</button>
             </div>
+            <div class="tool-row" role="group" aria-label="繞軸旋轉">
+              <span class="tool-label">繞軸</span>
+              <span class="axis-group"><abbr title="繞 F 軸">F</abbr>
+                <button type="button" data-spin="F" data-deg="-90">−90°</button>
+                <button type="button" data-spin="F" data-deg="-15">−15°</button>
+                <button type="button" data-spin="F" data-deg="15">+15°</button>
+                <button type="button" data-spin="F" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 B 軸">B</abbr>
+                <button type="button" data-spin="B" data-deg="-90">−90°</button>
+                <button type="button" data-spin="B" data-deg="-15">−15°</button>
+                <button type="button" data-spin="B" data-deg="15">+15°</button>
+                <button type="button" data-spin="B" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 I 軸">I</abbr>
+                <button type="button" data-spin="I" data-deg="-90">−90°</button>
+                <button type="button" data-spin="I" data-deg="-15">−15°</button>
+                <button type="button" data-spin="I" data-deg="15">+15°</button>
+                <button type="button" data-spin="I" data-deg="90">+90°</button>
+              </span>
+            </div>
+            <div class="tool-row" role="group" aria-label="對齊向量">
+              <span class="tool-label">對齊</span>
+              <span class="axis-group">朝鏡頭
+                <button type="button" data-align="toCamera" data-axis="F">F</button>
+                <button type="button" data-align="toCamera" data-axis="B">B</button>
+                <button type="button" data-align="toCamera" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">垂直
+                <button type="button" data-align="vertical" data-axis="F">F</button>
+                <button type="button" data-align="vertical" data-axis="B">B</button>
+                <button type="button" data-align="vertical" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">水平
+                <button type="button" data-align="horizontal" data-axis="F">F</button>
+                <button type="button" data-align="horizontal" data-axis="B">B</button>
+                <button type="button" data-align="horizontal" data-axis="I">I</button>
+              </span>
+            </div>
+          </div>
         </div>
-        <!-- 3D 檢視器 -->
-        <model-viewer 
-            id="left-viewer" 
-            src="models/1.Fleming left hand rule with arrow and remarks.glb"
-            camera-controls 
-            shadow-intensity="1"
-            alt="3D model of Fleming's Left Hand Rule">
-            <div id="left-error-overlay" class="error-overlay">
-                <h3>無法載入模型</h3>
-                <p>請確認檔案 "models/1.Fleming left hand rule with arrow and remarks.glb" 存在。</p>
-                <p><strong>注意：</strong>如果使用 "file://" 協議打開（雙擊 HTML），瀏覽器可能會阻擋本地資源載入。請使用 VS Code Live Server 或在終端機運行 "python -m http.server" 並訪問 localhost。</p>
+        <div class="viewport">
+          <canvas id="left-canvas"></canvas>
+          <div class="loading" data-loading>載入模型中…</div>
+        </div>
+        <aside class="formula-card" data-formula="motor">
+          <div class="formula-head">
+            <h3>公式教具</h3>
+            <p>拇指為力 F，食指為磁場 B，中指為電流 I。</p>
+          </div>
+          <p class="formula-eq">
+            <span class="sym-f">F</span> = <span class="sym-b">B</span><span class="sym-i">I</span>L sinθ
+          </p>
+          <div class="sliders">
+            <label>B 磁場 <strong data-val="B">1.00 T</strong><input type="range" data-param="B" min="0" max="2" step="0.01" value="1" /></label>
+            <label>I 電流 <strong data-val="I">1.00 A</strong><input type="range" data-param="I" min="0" max="5" step="0.01" value="1" /></label>
+            <label>L 導線長度 <strong data-val="L">0.10 m</strong><input type="range" data-param="L" min="0.01" max="1" step="0.01" value="0.10" /></label>
+            <label>θ 夾角 <strong data-val="theta">90°</strong><input type="range" data-param="theta" min="0" max="180" step="1" value="90" /></label>
+            <div class="theta-snaps" role="group" aria-label="常用夾角">
+              <button type="button" data-snap="0">0°</button>
+              <button type="button" data-snap="90">90°</button>
+              <button type="button" data-snap="180">180°</button>
             </div>
-        </model-viewer>
-    </div>
+            <p class="align-note" data-align-note>θ = 90° 時三隻手指互相垂直，對應標準手勢。</p>
+          </div>
+          <div class="result-row">
+            <div class="result">F = <strong data-result>0.100</strong> N</div>
+            <svg class="diagram" data-diagram viewBox="0 0 220 140" aria-hidden="true"></svg>
+          </div>
+        </aside>
+      </section>
 
-    <!-- 右半屏 -->
-    <div class="panel" id="right-panel">
+      <section class="panel" id="right-panel" data-side="right">
         <div class="controls">
-            <h2>右半屏: 佛萊明右手定則</h2>
-            <div class="button-group">
-                <input type="file" id="right-file-input" accept=".glb,.gltf">
-                <button id="right-default-btn">開啟預設右手定則</button>
-                <button id="right-rotate-btn" class="toggle-btn">開始旋轉</button>
+          <h2>右半屏：佛萊明右手定則（發電機）</h2>
+          <div class="button-group">
+            <button type="button" class="btn-primary" data-action="reload">開啟預設右手定則</button>
+            <button type="button" class="btn-toggle" data-action="rotate" aria-pressed="false">開始旋轉</button>
+            <button type="button" class="btn-ghost" data-action="reset-camera">重設視角</button>
+            <button type="button" class="btn-ghost" data-action="reset-pose">重設模型旋轉</button>
+          </div>
+          <div class="vector-toggles" role="group" aria-label="向量顯示">
+            <button type="button" class="chip chip-f" data-vector="F" aria-pressed="true">F／v 運動</button>
+            <button type="button" class="chip chip-b" data-vector="B" aria-pressed="true">B 磁場</button>
+            <button type="button" class="chip chip-i" data-vector="I" aria-pressed="true">I／E 電動勢</button>
+          </div>
+          <div class="pose-tools">
+            <div class="tool-row" role="group" aria-label="視角預設">
+              <span class="tool-label">視角</span>
+              <button type="button" data-view="front">正面</button>
+              <button type="button" data-view="side">側面</button>
+              <button type="button" data-view="top">頂視</button>
+              <button type="button" data-view="back">背面</button>
             </div>
+            <div class="tool-row" role="group" aria-label="繞軸旋轉">
+              <span class="tool-label">繞軸</span>
+              <span class="axis-group"><abbr title="繞 F 軸">F</abbr>
+                <button type="button" data-spin="F" data-deg="-90">−90°</button>
+                <button type="button" data-spin="F" data-deg="-15">−15°</button>
+                <button type="button" data-spin="F" data-deg="15">+15°</button>
+                <button type="button" data-spin="F" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 B 軸">B</abbr>
+                <button type="button" data-spin="B" data-deg="-90">−90°</button>
+                <button type="button" data-spin="B" data-deg="-15">−15°</button>
+                <button type="button" data-spin="B" data-deg="15">+15°</button>
+                <button type="button" data-spin="B" data-deg="90">+90°</button>
+              </span>
+              <span class="axis-group"><abbr title="繞 I 軸">I</abbr>
+                <button type="button" data-spin="I" data-deg="-90">−90°</button>
+                <button type="button" data-spin="I" data-deg="-15">−15°</button>
+                <button type="button" data-spin="I" data-deg="15">+15°</button>
+                <button type="button" data-spin="I" data-deg="90">+90°</button>
+              </span>
+            </div>
+            <div class="tool-row" role="group" aria-label="對齊向量">
+              <span class="tool-label">對齊</span>
+              <span class="axis-group">朝鏡頭
+                <button type="button" data-align="toCamera" data-axis="F">F</button>
+                <button type="button" data-align="toCamera" data-axis="B">B</button>
+                <button type="button" data-align="toCamera" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">垂直
+                <button type="button" data-align="vertical" data-axis="F">F</button>
+                <button type="button" data-align="vertical" data-axis="B">B</button>
+                <button type="button" data-align="vertical" data-axis="I">I</button>
+              </span>
+              <span class="axis-group">水平
+                <button type="button" data-align="horizontal" data-axis="F">F</button>
+                <button type="button" data-align="horizontal" data-axis="B">B</button>
+                <button type="button" data-align="horizontal" data-axis="I">I</button>
+              </span>
+            </div>
+          </div>
         </div>
-        <!-- 3D 檢視器 -->
-        <model-viewer 
-            id="right-viewer" 
-            src="models/2.Fleming right hand rule with arrow and remarks.glb"
-            camera-controls 
-            shadow-intensity="1"
-            alt="3D model of Fleming's Right Hand Rule">
-            <div id="right-error-overlay" class="error-overlay">
-                <h3>無法載入模型</h3>
-                <p>請確認檔案 "models/2.Fleming right hand rule with arrow and remarks.glb" 存在。</p>
-                <p><strong>注意：</strong>如果使用 "file://" 協議打開（雙擊 HTML），瀏覽器可能會阻擋本地資源載入。請使用 VS Code Live Server 或在終端機運行 "python -m http.server" 並訪問 localhost。</p>
+        <div class="viewport">
+          <canvas id="right-canvas"></canvas>
+          <div class="loading" data-loading>載入模型中…</div>
+        </div>
+        <aside class="formula-card" data-formula="generator">
+          <div class="formula-head">
+            <h3>公式教具</h3>
+            <p>拇指為運動方向 v（模型標示為 F），食指為磁場 B，中指為感應電流／電動勢。</p>
+          </div>
+          <p class="formula-eq">
+            <span class="sym-f">E</span> = <span class="sym-b">B</span> ℓ <span class="sym-i">v</span> sinθ
+          </p>
+          <div class="sliders">
+            <label>B 磁場 <strong data-val="B">1.00 T</strong><input type="range" data-param="B" min="0" max="2" step="0.01" value="1" /></label>
+            <label>ℓ 導線長度 <strong data-val="L">0.10 m</strong><input type="range" data-param="L" min="0.01" max="1" step="0.01" value="0.10" /></label>
+            <label>v 速率 <strong data-val="v">1.00 m/s</strong><input type="range" data-param="v" min="0" max="10" step="0.01" value="1" /></label>
+            <label>θ 夾角 <strong data-val="theta">90°</strong><input type="range" data-param="theta" min="0" max="180" step="1" value="90" /></label>
+            <div class="theta-snaps" role="group" aria-label="常用夾角">
+              <button type="button" data-snap="0">0°</button>
+              <button type="button" data-snap="90">90°</button>
+              <button type="button" data-snap="180">180°</button>
             </div>
-        </model-viewer>
-    </div>
-</div>
+            <p class="align-note" data-align-note>θ = 90° 時三隻手指互相垂直，對應標準手勢。</p>
+          </div>
+          <div class="result-row">
+            <div class="result">E = <strong data-result>0.100</strong> V</div>
+            <svg class="diagram" data-diagram viewBox="0 0 220 140" aria-hidden="true"></svg>
+          </div>
+        </aside>
+      </section>
+    </main>
 
-<script>
-    // 定義預設檔案路徑
-    // 注意：在本地 file:// 協議下，路徑可能需要特殊處理，這裡使用相對路徑，並保留空格
-    const LEFT_DEFAULT_PATH = 'models/1.Fleming left hand rule with arrow and remarks.glb';
-    const RIGHT_DEFAULT_PATH = 'models/2.Fleming right hand rule with arrow and remarks.glb';
-
-    // 取得 DOM 元素
-    const leftViewer = document.getElementById('left-viewer');
-    const leftFileInput = document.getElementById('left-file-input');
-    const leftDefaultBtn = document.getElementById('left-default-btn');
-    const leftRotateBtn = document.getElementById('left-rotate-btn');
-    const leftErrorOverlay = document.getElementById('left-error-overlay');
-
-    const rightViewer = document.getElementById('right-viewer');
-    const rightFileInput = document.getElementById('right-file-input');
-    const rightDefaultBtn = document.getElementById('right-default-btn');
-    const rightRotateBtn = document.getElementById('right-rotate-btn');
-    const rightErrorOverlay = document.getElementById('right-error-overlay');
-
-    // 通用載入檔案函式 (處理上載)
-    function handleFileUpload(inputElement, viewerElement, errorOverlay) {
-        inputElement.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                viewerElement.src = url;
-                viewerElement.alt = file.name;
-                errorOverlay.style.display = 'none'; // 隱藏錯誤
-            }
-        });
-    }
-
-    // 通用載入預設檔案函式
-    function loadDefaultModel(viewerElement, path, errorOverlay) {
-        // 重置 src 以觸發載入
-        viewerElement.src = path;
-        viewerElement.alt = "Default Model";
-        errorOverlay.style.display = 'none'; // 先隱藏
-    }
-
-    // 處理 model-viewer 載入錯誤
-    function handleLoadError(viewerElement, errorOverlay) {
-        viewerElement.addEventListener('error', (e) => {
-            console.error(`Error loading model for ${viewerElement.id}:`, e);
-            errorOverlay.style.display = 'flex'; // 顯示錯誤提示
-        });
-        // 成功載入時隱藏
-        viewerElement.addEventListener('load', () => {
-             errorOverlay.style.display = 'none';
-        });
-    }
-
-    // 通用切換旋轉函式
-    function toggleRotation(viewerElement, btnElement) {
-        if (viewerElement.hasAttribute('auto-rotate')) {
-            viewerElement.removeAttribute('auto-rotate');
-            btnElement.textContent = '開始旋轉';
-        } else {
-            viewerElement.setAttribute('auto-rotate', '');
-            btnElement.textContent = '停止旋轉';
-        }
-    }
-
-    // --- 初始化左側邏輯 ---
-    // 預先設定錯誤監聽器，因為 src 在 HTML 中已設定，可能會立即觸發 error
-    handleLoadError(leftViewer, leftErrorOverlay);
-    handleLoadError(rightViewer, rightErrorOverlay);
-
-    handleFileUpload(leftFileInput, leftViewer, leftErrorOverlay);
-    
-    leftDefaultBtn.addEventListener('click', () => {
-        loadDefaultModel(leftViewer, LEFT_DEFAULT_PATH, leftErrorOverlay);
-        leftFileInput.value = ''; 
-    });
-
-    leftRotateBtn.addEventListener('click', () => {
-        toggleRotation(leftViewer, leftRotateBtn);
-    });
-
-    // --- 初始化右側邏輯 ---
-    handleFileUpload(rightFileInput, rightViewer, rightErrorOverlay);
-
-    rightDefaultBtn.addEventListener('click', () => {
-        loadDefaultModel(rightViewer, RIGHT_DEFAULT_PATH, rightErrorOverlay);
-        rightFileInput.value = '';
-    });
-
-    rightRotateBtn.addEventListener('click', () => {
-        toggleRotation(rightViewer, rightRotateBtn);
-    });
-
-</script>
-
-</body>
+  </body>
 </html>
