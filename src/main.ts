@@ -191,7 +191,7 @@ async function boot(): Promise<void> {
     background: 0xe8f0fe,
     modelUrl: LEFT_MODEL,
     rigKind: "motor",
-    defaultAzimuth: -0.55,
+    defaultAzimuth: Math.PI + 0.70,
     defaultPolar: 1.18,
   });
   const rightViewer = new HandViewer({
@@ -199,7 +199,7 @@ async function boot(): Promise<void> {
     background: 0xfef0e8,
     modelUrl: RIGHT_MODEL,
     rigKind: "generator",
-    defaultAzimuth: 0.7,
+    defaultAzimuth: Math.PI - 0.70,
     defaultPolar: 1.18,
   });
 

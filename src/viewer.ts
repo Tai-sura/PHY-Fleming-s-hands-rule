@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { FormulaRig, makeHandBasis, type DiagramView, type RigKind, type RigValues } from "./formulaRig";
 
 export type VectorKey = "F" | "B" | "I";
@@ -24,8 +26,9 @@ export interface ViewerOptions {
 }
 
 const SKIN = new THREE.Color(0xffd8bd);
-const WHITE = new THREE.Color(0xffffff);
 const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+
 
 export class HandViewer {
   readonly renderer: THREE.WebGLRenderer;
@@ -68,9 +71,8 @@ export class HandViewer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.shadowMap.enabled = false;
 
     this.camera = new THREE.PerspectiveCamera(38, 1, 0.01, 50);
     this.scene.background = new THREE.Color(options.background);
@@ -101,6 +103,10 @@ export class HandViewer {
     });
     this.scene.add(this.rig.group);
     this.addLights();
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+    this.scene.environmentIntensity = 0.38;
+    pmrem.dispose();
     this.resize();
     this.loop = this.loop.bind(this);
     this.raf = requestAnimationFrame(this.loop);
@@ -128,8 +134,8 @@ export class HandViewer {
     this.model = gltf.scene;
     this.model.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
-        obj.castShadow = true;
-        obj.receiveShadow = true;
+        obj.castShadow = false;
+        obj.receiveShadow = false;
         const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
         const unique = materials.map((m) => m.clone());
         obj.material = Array.isArray(obj.material) ? unique : unique[0];
@@ -148,6 +154,9 @@ export class HandViewer {
     this.alignRigToHand();
     this.frameModel();
     this.applySkin();
+    // Preview-based rebuild already has anatomical nails; do not overlay spheres.
+    const highRes = this.handMeshes.some((mesh) => (mesh.geometry.getAttribute("position")?.count ?? 0) > 20000);
+    if (!this.model.getObjectByName("mesh-hand-preview") && !highRes) this.addNails();
   }
 
   /** Default-view axes plus the hand-aligned formula basis, for the 2D diagram. */
@@ -307,12 +316,29 @@ export class HandViewer {
         obj.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             this.handMeshes.push(child);
-            const mat = child.material;
-            if (mat instanceof THREE.MeshStandardMaterial) {
-              this.skinOriginal.set(child, mat.color.clone());
-              mat.metalness = 0;
-              if (mat.roughness < 0.3) mat.roughness = 0.48;
-              mat.vertexColors = Boolean(child.geometry.getAttribute("color"));
+            const src = Array.isArray(child.material) ? child.material[0] : child.material;
+            if (src instanceof THREE.MeshStandardMaterial) {
+              if (src.map) src.map.colorSpace = THREE.SRGBColorSpace;
+              const hasMap = Boolean(src.map);
+              const phys = new THREE.MeshPhysicalMaterial({
+                map: src.map,
+                roughnessMap: src.roughnessMap,
+                metalnessMap: src.metalnessMap,
+                normalMap: src.normalMap,
+                normalScale: src.normalScale?.clone() ?? new THREE.Vector2(hasMap ? 1 : 0.4, hasMap ? 1 : 0.4),
+                color: 0xffffff,
+                metalness: 0,
+                roughness: src.roughnessMap ? 1 : src.roughness,
+                sheen: hasMap ? 0.08 : 0.42,
+                sheenColor: new THREE.Color(0xc87a5c),
+                sheenRoughness: hasMap ? 0.7 : 0.55,
+                clearcoat: hasMap ? 0.02 : 0.08,
+                clearcoatRoughness: hasMap ? 0.55 : 0.45,
+                envMapIntensity: hasMap ? 0.28 : 0.45,
+                vertexColors: false,
+              });
+              child.material = phys;
+              this.skinOriginal.set(child, phys.color.clone());
             }
           }
         });
@@ -355,16 +381,174 @@ export class HandViewer {
   }
 
   private applySkin(): void {
-    const mix = this.skinEnabled ? this.skinStrength : 0;
-    const tint = WHITE.clone().lerp(SKIN, mix);
     for (const mesh of this.handMeshes) {
       const mat = mesh.material;
       if (!(mat instanceof THREE.MeshStandardMaterial)) continue;
-      const base = this.skinOriginal.get(mesh) ?? WHITE;
-      mat.color.copy(base).multiply(tint);
+      if (this.skinEnabled) {
+        if (mat.map) {
+          // Photoreal albedo is already in the texture; do not peach-tint it.
+          mat.color.set(0xffffff);
+        } else {
+          const warmth = THREE.MathUtils.clamp((this.skinStrength - 0.5) * 0.25, -0.08, 0.12);
+          mat.color.set(0xffffff).lerp(SKIN, 0.12 + warmth);
+        }
+        if (mat instanceof THREE.MeshPhysicalMaterial) {
+          mat.sheen = mat.map ? 0.08 : 0.42;
+          mat.clearcoat = mat.map ? 0.02 : 0.08;
+        }
+      } else {
+        mat.color.set(0xc9c4bf);
+        if (mat instanceof THREE.MeshPhysicalMaterial) {
+          mat.sheen = 0;
+          mat.clearcoat = 0;
+        }
+      }
       mat.metalness = 0;
       mat.needsUpdate = true;
     }
+  }
+
+  /**
+   * Place stylized nail plates on the five fingertips.
+   * Uses F/B/I arrow directions plus two remaining extrema for ring/pinky.
+   * Nails follow the hand pose because they are parented to the model.
+   */
+  private addNails(): void {
+    if (!this.model || this.handMeshes.length === 0) return;
+    const prev = this.model.getObjectByName("nails");
+    if (prev) {
+      this.model.remove(prev);
+      prev.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose();
+          if (obj.material instanceof THREE.Material) obj.material.dispose();
+        }
+      });
+    }
+
+    this.model.updateWorldMatrix(true, true);
+    const worldPts: THREE.Vector3[] = [];
+    for (const mesh of this.handMeshes) {
+      const pos = mesh.geometry.getAttribute("position");
+      const v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        mesh.localToWorld(v);
+        worldPts.push(v.clone());
+      }
+    }
+    if (worldPts.length === 0) return;
+
+    const box = new THREE.Box3();
+    for (const p of worldPts) box.expandByPoint(p);
+    const span = box.getSize(new THREE.Vector3()).length();
+    const palm = box.getCenter(new THREE.Vector3());
+
+    const dirF = this.arrowDirection("F");
+    const dirB = this.arrowDirection("B");
+    const dirI = this.arrowDirection("I");
+    if (!dirF || !dirB || !dirI) return;
+
+    const tipOf = (dir: THREE.Vector3) => {
+      let best = worldPts[0];
+      let bestDot = -Infinity;
+      for (const p of worldPts) {
+        const d = p.dot(dir);
+        if (d > bestDot) {
+          bestDot = d;
+          best = p;
+        }
+      }
+      return best.clone();
+    };
+    const tips: { pos: THREE.Vector3; dir: THREE.Vector3 }[] = [
+      { pos: tipOf(dirF), dir: dirF.clone() },
+      { pos: tipOf(dirB), dir: dirB.clone() },
+      { pos: tipOf(dirI), dir: dirI.clone() },
+    ];
+
+    const n = new THREE.Vector3()
+      .subVectors(tips[1].pos, tips[0].pos)
+      .cross(new THREE.Vector3().subVectors(tips[2].pos, tips[0].pos));
+    if (n.lengthSq() < 1e-12) n.copy(dirF).cross(dirB);
+    n.normalize();
+    if (n.dot(new THREE.Vector3().subVectors(palm, tips[0].pos)) > 0) n.negate();
+
+    const out = new THREE.Vector3().copy(dirF).add(dirB).add(dirI);
+    if (out.lengthSq() < 1e-12) out.set(0, 1, 0);
+    else out.normalize();
+    const used = tips.map((t) => t.pos);
+    const typical = (tips[0].pos.distanceTo(tips[1].pos) + tips[0].pos.distanceTo(tips[2].pos) + tips[1].pos.distanceTo(tips[2].pos)) / 3;
+    const minSep = typical * 0.4;
+    const minPalm = tips.reduce((s, t) => s + t.pos.distanceTo(palm), 0) / tips.length * 0.55;
+    const candidates = [...worldPts].sort((a, b) => b.dot(out) - a.dot(out));
+    for (const p of candidates) {
+      if (tips.length >= 5) break;
+      if (p.distanceTo(palm) < minPalm) continue;
+      if (used.some((u) => u.distanceTo(p) < minSep)) continue;
+      const dir = new THREE.Vector3().subVectors(p, palm);
+      if (dir.lengthSq() < 1e-12) continue;
+      dir.normalize();
+      tips.push({ pos: p.clone(), dir });
+      used.push(p);
+    }
+
+    const nailMat = new THREE.MeshPhysicalMaterial({
+      color: 0xe8c2b6,
+      roughness: 0.28,
+      metalness: 0,
+      clearcoat: 0.72,
+      clearcoatRoughness: 0.16,
+      sheen: 0.18,
+      sheenColor: new THREE.Color(0xffd4cc),
+      envMapIntensity: 0.7,
+    });
+    const group = new THREE.Group();
+    group.name = "nails";
+
+    const nearR = span * 0.045;
+    const maxRadius = span * 0.028;
+    for (const tip of tips) {
+      const rads: number[] = [];
+      for (const p of worldPts) {
+        if (p.distanceTo(tip.pos) > nearR) continue;
+        const rel = new THREE.Vector3().subVectors(p, tip.pos);
+        const along = rel.dot(tip.dir);
+        const rad = rel.addScaledVector(tip.dir, -along).length();
+        if (rad > 1e-6) rads.push(rad);
+      }
+      rads.sort((a, b) => a - b);
+      let radius = rads.length ? rads[Math.floor(rads.length * 0.3)] : span * 0.016;
+      radius = Math.min(Math.max(radius, span * 0.008), maxRadius);
+      const length = radius * 1.45;
+      const width = radius * 1.15;
+      const thick = radius * 0.28;
+
+      let dorsal = n.clone().addScaledVector(tip.dir, -n.dot(tip.dir));
+      if (dorsal.lengthSq() < 1e-8) dorsal = new THREE.Vector3(0, 1, 0).cross(tip.dir);
+      dorsal.normalize();
+      const side = new THREE.Vector3().crossVectors(tip.dir, dorsal).normalize();
+      dorsal.crossVectors(side, tip.dir).normalize();
+
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), nailMat);
+      mesh.castShadow = false;
+      const worldPos = tip.pos
+        .clone()
+        .addScaledVector(tip.dir, -length * 0.22)
+        .addScaledVector(dorsal, radius * 0.55);
+      const basis = new THREE.Matrix4().makeBasis(side, dorsal, tip.dir.clone());
+      const worldQuat = new THREE.Quaternion().setFromRotationMatrix(basis);
+      const localPos = worldPos.clone();
+      this.model.worldToLocal(localPos);
+      const inv = new THREE.Quaternion();
+      this.model.getWorldQuaternion(inv);
+      inv.invert();
+      mesh.position.copy(localPos);
+      mesh.quaternion.copy(inv.multiply(worldQuat));
+      mesh.scale.set(width, thick, length);
+      group.add(mesh);
+    }
+    this.model.add(group);
   }
 
   private frameModel(applyCamera = true): void {
@@ -406,15 +590,6 @@ export class HandViewer {
 
     const key = new THREE.DirectionalLight(0xfff3e8, 1.35);
     key.position.set(0.6, 1.4, 0.9);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
-    key.shadow.camera.near = 0.1;
-    key.shadow.camera.far = 8;
-    key.shadow.camera.left = -1.2;
-    key.shadow.camera.right = 1.2;
-    key.shadow.camera.top = 1.2;
-    key.shadow.camera.bottom = -1.2;
-    key.shadow.bias = -0.0008;
     this.scene.add(key);
 
     const fill = new THREE.DirectionalLight(0xdfe9ff, 0.45);
@@ -425,14 +600,6 @@ export class HandViewer {
     rim.position.set(0.2, 0.8, -1.0);
     this.scene.add(rim);
 
-    const ground = new THREE.Mesh(
-      new THREE.CircleGeometry(2.4, 48),
-      new THREE.ShadowMaterial({ opacity: 0.28 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 0;
-    ground.receiveShadow = true;
-    this.scene.add(ground);
   }
 
   private loop(): void {

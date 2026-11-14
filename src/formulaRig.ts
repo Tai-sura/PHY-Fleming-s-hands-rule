@@ -166,7 +166,11 @@ export class FormulaRig {
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const span = Math.max(size.x, size.y, size.z);
-    const xOff = (side === "left" ? -0.50 : 0.50) * span;
+    // The model AABB already includes the F/B/I arrows and letters, so an
+    // offset of 0.50*span sat on the box face — on the left hand, that is
+    // the I letter. Push the triad origin past that face by a clear gap.
+    const clearance = span * 0.28;
+    const xOff = (side === "left" ? -1 : 1) * (size.x * 0.5 + clearance);
     const world = new THREE.Vector3(center.x + xOff, center.y + size.y * 0.06, center.z);
     if (this.group.parent) {
       this.group.parent.updateWorldMatrix(true, true);

@@ -2,7 +2,7 @@
 
 線上使用（無需安裝）：[https://tai-sura.github.io/PHY-Fleming-s-hands-rule/](https://tai-sura.github.io/PHY-Fleming-s-hands-rule/)
 
-把 V20 的左右分屏模型檢視器，升級為 Vite + TypeScript + three.js 的互動教學應用：可顯示／隱藏 F、B、I 向量、套用自然膚色、左右獨立或同步旋轉，並附有公式教具。GitHub Pages 由倉庫根目錄提供正式建置（`index.html`、`assets/`、`models/`）。`docs/` 是同一份建置備份。本機若要用 Vite 開發，請先把 `index.dev.html` 複製為開發用入口。
+把 V20 的左右分屏模型檢視器，升級為 Vite + TypeScript + three.js 的互動教學應用：可顯示／隱藏 F、B、I 向量、套用自然膚色、左右獨立或同步旋轉，並附有公式教具。倉庫的 `docs/` 資料夾是給 GitHub Pages 用的正式建置。
 
 - **左半屏**：佛萊明左手定則（摩打）　公式 \(F = B I L \sin\theta\)
 - **右半屏**：佛萊明右手定則（發電機）　公式 \(E = B \ell v \sin\theta\)
