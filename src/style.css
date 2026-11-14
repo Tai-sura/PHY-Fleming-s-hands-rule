@@ -177,6 +177,8 @@ button, .file-btn {
 .chip-f[aria-pressed="true"] { background: #eef0ff; }
 .chip-b[aria-pressed="true"] { background: #e9fbe9; }
 .chip-i[aria-pressed="true"] { background: #ffeef2; }
+.chip-rig { border-color: #4a5a70; color: #2f3d52; min-width: 88px; }
+.chip-rig[aria-pressed="true"] { background: #eef2f6; }
 
 .viewport {
   flex: 1;

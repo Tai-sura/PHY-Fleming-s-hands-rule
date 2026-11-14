@@ -27,7 +27,7 @@
         </label>
         <label class="check">
           <input type="checkbox" id="show-rig" checked />
-          顯示公式向量
+          顯示公式方位指示
         </label>
       </div>
     </header>
@@ -42,10 +42,11 @@
             <button type="button" class="btn-ghost" data-action="reset-camera">重設視角</button>
             <button type="button" class="btn-ghost" data-action="reset-pose">重設模型旋轉</button>
           </div>
-          <div class="vector-toggles" role="group" aria-label="向量顯示">
+          <div class="vector-toggles" role="group" aria-label="向量與公式方位顯示">
             <button type="button" class="chip chip-f" data-vector="F" aria-pressed="true">F 力</button>
             <button type="button" class="chip chip-b" data-vector="B" aria-pressed="true">B 磁場</button>
             <button type="button" class="chip chip-i" data-vector="I" aria-pressed="true">I 電流</button>
+            <button type="button" class="chip chip-rig" data-rig="toggle" aria-pressed="true">公式方位</button>
           </div>
           <div class="pose-tools">
             <div class="tool-row" role="group" aria-label="視角預設">
@@ -136,10 +137,11 @@
             <button type="button" class="btn-ghost" data-action="reset-camera">重設視角</button>
             <button type="button" class="btn-ghost" data-action="reset-pose">重設模型旋轉</button>
           </div>
-          <div class="vector-toggles" role="group" aria-label="向量顯示">
+          <div class="vector-toggles" role="group" aria-label="向量與公式方位顯示">
             <button type="button" class="chip chip-f" data-vector="F" aria-pressed="true">F／v 運動</button>
             <button type="button" class="chip chip-b" data-vector="B" aria-pressed="true">B 磁場</button>
             <button type="button" class="chip chip-i" data-vector="I" aria-pressed="true">I／E 電動勢</button>
+            <button type="button" class="chip chip-rig" data-rig="toggle" aria-pressed="true">公式方位</button>
           </div>
           <div class="pose-tools">
             <div class="tool-row" role="group" aria-label="視角預設">

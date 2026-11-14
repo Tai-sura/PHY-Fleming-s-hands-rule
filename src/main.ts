@@ -91,6 +91,15 @@ function bindPanel(panel: PanelState, defaultUrl: string): void {
     });
   });
 
+  root.querySelectorAll<HTMLButtonElement>("[data-rig]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const visible = btn.getAttribute("aria-pressed") !== "true";
+      btn.setAttribute("aria-pressed", String(visible));
+      panel.viewer.setRigVisible(visible);
+      syncHeaderRigCheckbox();
+    });
+  });
+
   const rotateBtn = root.querySelector<HTMLButtonElement>("[data-action=rotate]")!;
   rotateBtn.addEventListener("click", () => {
     const on = !panel.viewer.isAutoRotate();
@@ -134,6 +143,7 @@ function bindPanel(panel: PanelState, defaultUrl: string): void {
     setLoading(root, true);
     await panel.viewer.load(defaultUrl);
     applyGlobalSkin();
+    applyPanelRigVisibility(panel);
     refreshFormula(panel);
     setLoading(root, false);
   });
@@ -176,10 +186,30 @@ function applyGlobalSkin(): void {
   right.viewer.setSkinTint(enabled, strength);
 }
 
+function applyPanelRigVisibility(panel: PanelState): void {
+  const btn = panel.root.querySelector<HTMLButtonElement>("[data-rig]");
+  const visible = btn ? btn.getAttribute("aria-pressed") !== "false" : true;
+  panel.viewer.setRigVisible(visible);
+}
+
+function syncHeaderRigCheckbox(): void {
+  const header = document.querySelector<HTMLInputElement>("#show-rig");
+  if (!header) return;
+  const pressed = (panel: PanelState) =>
+    panel.root.querySelector("[data-rig]")?.getAttribute("aria-pressed") !== "false";
+  header.checked = pressed(left) && pressed(right);
+  header.indeterminate = pressed(left) !== pressed(right);
+}
+
 function applyRigVisibility(): void {
   const visible = document.querySelector<HTMLInputElement>("#show-rig")!.checked;
-  left.viewer.setRigVisible(visible);
-  right.viewer.setRigVisible(visible);
+  for (const panel of [left, right]) {
+    panel.viewer.setRigVisible(visible);
+    panel.root.querySelectorAll<HTMLButtonElement>("[data-rig]").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(visible));
+    });
+  }
+  syncHeaderRigCheckbox();
 }
 
 async function boot(): Promise<void> {
