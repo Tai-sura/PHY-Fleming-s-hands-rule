@@ -555,11 +555,12 @@ export class HandViewer {
     if (!this.model) return;
     this.pose.updateWorldMatrix(true, true);
     const content = new THREE.Box3().setFromObject(this.model);
+    // Include the side formula triad so a half-width 32" panel can show
+    // the whole gesture plus the direction diagram, not just the hand.
+    if (this.rig?.group) content.expandByObject(this.rig.group);
     if (content.isEmpty()) return;
     const hand = this.model.getObjectByName("hand");
     const focus = (hand ? new THREE.Box3().setFromObject(hand) : content).getCenter(new THREE.Vector3());
-    // Fit every baked arrow and letter around the palm, not a sphere that
-    // includes the side formula rig (that had zoomed the hands too small).
     let maxX = 0;
     let maxY = 0;
     let maxZ = 0;
@@ -577,7 +578,7 @@ export class HandViewer {
     const fitH = maxY / Math.tan(halfFov);
     const fitW = maxX / Math.tan(halfFov) / aspect;
     this.defaultTarget = [focus.x, focus.y, focus.z];
-    this.defaultRadius = Math.max(fitH, fitW) * 1.2 + maxZ * 0.2;
+    this.defaultRadius = Math.max(fitH, fitW) * 1.24 + maxZ * 0.22;
     const span = Math.max(maxX, maxY, maxZ);
     this.controls.minDistance = span * 0.6;
     this.controls.maxDistance = span * 16;
